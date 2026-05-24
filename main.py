@@ -1,5 +1,5 @@
 def main():
-    print("Hello from hate-speech-detector!")
+    print("Hello from p9e5!")
 
 
 if __name__ == "__main__":

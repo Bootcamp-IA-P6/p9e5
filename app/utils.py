@@ -17,7 +17,7 @@ for resource in ["stopwords", "wordnet", "omw-1.4"]:
     except LookupError:
         nltk.download(resource, quiet=True)
 
-STOP_WORDS  = set(stopwords.words("english")) | set(stopwords.words("spanish"))
+STOP_WORDS  = set(stopwords.words("english"))
 lemmatizer  = WordNetLemmatizer()
 
 # ── ML-based type classifier ─────────────────────────────────────────────────
@@ -36,25 +36,24 @@ def _load_type_pipeline():
 def clean_text(text: str) -> str:
     """
     Limpia y normaliza el texto de entrada.
-    Pipeline: minúsculas → sin URLs → sin menciones → sin HTML
-              → solo letras → sin stopwords → lematización.
+    Pipeline idéntico al usado durante el entrenamiento del modelo:
+    minúsculas → sin URLs → sin menciones → sin hashtags → sin números
+    → sin puntuación → sin stopwords → lematización.
     """
     if not isinstance(text, str):
         return ""
-
     text = text.lower()
-    text = re.sub(r"http\S+|www\.\S+", "", text)
+    text = re.sub(r"http\S+|www\S+", "", text)
     text = re.sub(r"@\w+", "", text)
-    text = re.sub(r"<.*?>", "", text)
-    text = re.sub(r"[^a-z\s]", "", text)
+    text = re.sub(r"#\w+", "", text)
+    text = re.sub(r"\d+", "", text)
+    text = re.sub(r"[^\w\s]", "", text)
     text = re.sub(r"\s+", " ", text).strip()
-
     tokens = [
         lemmatizer.lemmatize(word)
         for word in text.split()
-        if word not in STOP_WORDS and len(word) > 2
+        if word not in STOP_WORDS
     ]
-
     return " ".join(tokens)
 
 

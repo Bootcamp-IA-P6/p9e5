@@ -97,6 +97,22 @@ El modelo es efectivo para detectar patrones de odio explícito y sistemático.
 Para detectar odio contextual o implícito sería necesario un modelo basado
 en transformers como BERT.
 
+## Modelo Transformer — DistilBERT
+
+El modelo transformer fue entrenado en Kaggle con GPU T4 debido a incompatibilidades
+de PyTorch con Python 3.14 en Windows.
+
+- Notebook de entrenamiento: [Kaggle](https://www.kaggle.com/code/agabrielahernandezb/notebook562ed730ab)
+- Modelo publicado: [Hugging Face](https://huggingface.co/Gabriela-Her/p9e5-hate-speech-detector)
+
+### Comparativa de modelos
+
+| Métrica        | Random Forest | DistilBERT |
+|----------------|---------------|------------|
+| Accuracy       | 59.5%         | 76%        |
+| Recall tóxicos | 17%           | 71%        |
+| F1 tóxicos     | 0.28          | 0.73       |
+
 ## Tecnologías
 
 - Python 3.10+

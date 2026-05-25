@@ -5,3 +5,9 @@ __pycache__/
 data/
 *.pkl
 *.joblib
+# Frontend
+frontend/node_modules/
+frontend/package-lock.json
+frontend/dist/
+# Training scripts (local only)
+train_model.py

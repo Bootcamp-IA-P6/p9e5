@@ -1,0 +1,12 @@
+version: "3.9"
+
+services:
+  streamlit:
+    build: .
+    ports:
+      - "8501:8501"
+    environment:
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - ./src:/app/src          # modelos entrenados (model.joblib, vectorizer.joblib)
+      - ./data:/app/data

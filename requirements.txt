@@ -1,0 +1,11 @@
+scikit-learn
+pandas
+numpy
+nltk
+optuna
+joblib
+matplotlib
+seaborn
+wordcloud
+imbalanced-learn
+streamlit>=1.40.0

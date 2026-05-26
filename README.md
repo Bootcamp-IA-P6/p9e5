@@ -16,6 +16,7 @@ permitiendo a los moderadores centrarse en los casos ambiguos.
 - Paloma Gomez
 
 ## Estructura del proyecto
+
 ```
 p9e5/
 ├── data/
@@ -29,7 +30,10 @@ p9e5/
 │   ├── model.joblib                  # Modelo final serializado
 │   └── vectorizer.joblib             # Vectorizador TF-IDF serializado
 ├── app/
-│   └── app.py                        # Interfaz Streamlit
+│   ├── app.py                        # Interfaz Streamlit
+│   └── samples/
+│       ├── sample_comments.txt       # Archivo de ejemplo para análisis por lotes (.txt)
+│       └── sample_comments.csv       # Archivo de ejemplo para análisis por lotes (.csv)
 ├── pyproject.toml                    # Dependencias del proyecto
 └── README.md
 ```
@@ -54,8 +58,10 @@ y colócalo en `data/raw/youtoxic_english_1000.csv`.
 ## Uso
 
 ```bash
-python -m streamlit run app/app.py
+uv run streamlit run app/app.py
 ```
+
+La app se abre automáticamente en `http://localhost:8501`.
 
 ## Flujo del proyecto
 
@@ -86,6 +92,38 @@ python -m streamlit run app/app.py
 | Diferencia train/test | 3.63pp |
 | Precision tóxicos | 76% |
 | Recall tóxicos | 17% |
+
+## Interfaz Streamlit
+
+La aplicación web permite usar el modelo sin conocimientos técnicos. Incluye cuatro pestañas:
+
+### Análisis individual
+- Entrada de texto libre con ejemplos rápidos precargados
+- Indicador visual de toxicidad (gauge) con porcentaje de confianza
+- Resultado codificado por color: rojo (tóxico) / verde (seguro)
+- Palabras y n-gramas más influyentes en la clasificación
+- Umbral de decisión ajustable desde el panel lateral
+
+### Análisis por lotes
+- Pegado directo de múltiples comentarios
+- Carga de archivos `.txt` (un comentario por línea) o `.csv` (columna `comment`)
+- Detección automática de columna en archivos CSV
+- Archivos de ejemplo descargables directamente desde la interfaz
+- Tabla de resultados exportable en CSV
+- Gráfico de distribución tóxico/seguro
+
+### Historial de sesión
+- Registro automático de todos los análisis realizados en la sesión
+- 4 métricas clave: total analizados, tóxicos, seguros y porcentaje medio de toxicidad
+- Gráfico de evolución temporal con puntos coloreados por resultado
+- Gráfico circular con desglose tóxico/seguro
+- Exportación del historial completo en CSV
+
+### Panel lateral
+- Umbral de clasificación ajustable (0.0 — 1.0)
+- Toggle para activar/desactivar preprocesado de texto
+- Toggle para mostrar/ocultar palabras influyentes
+- Contador de textos analizados en la sesión actual
 
 ## Limitaciones conocidas
 
@@ -121,4 +159,18 @@ de PyTorch con Python 3.14 en Windows.
 - pandas / numpy
 - Optuna
 - Streamlit
+- Plotly
 - uv
+
+## Ramas
+
+| Rama | Descripción |
+|---|---|
+| `main` | Código estable en producción |
+| `develop` | Rama de integración |
+| `feature/streamlit-app` | Implementación completa de la app Streamlit |
+
+## Próximos pasos
+
+- Despliegue en Hugging Face Spaces
+- Soporte multiidioma (español)

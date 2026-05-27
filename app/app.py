@@ -1,5 +1,6 @@
 import streamlit as st
 import joblib
+from transformers import pipeline
 import re
 import os
 import numpy as np
@@ -57,17 +58,18 @@ st.markdown(
 )
 
 # ── Carga del modelo ──────────────────────────────────────────────────────────
-BASE_DIR   = os.path.dirname(os.path.abspath(__file__))
-MODEL_PATH = os.path.join(BASE_DIR, "..", "src", "model.joblib")
-VEC_PATH   = os.path.join(BASE_DIR, "..", "src", "vectorizer.joblib")
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 @st.cache_resource(show_spinner="Cargando modelo…")
 def load_artifacts():
-    model      = joblib.load(MODEL_PATH)
-    vectorizer = joblib.load(VEC_PATH)
-    return model, vectorizer
+    classifier = pipeline(
+        "text-classification",
+        model="Gabriela-Her/p9e5-hate-speech-detector",
+        device=-1,
+    )
+    return classifier
 
-model, vectorizer = load_artifacts()
+classifier = load_artifacts()
 
 # ── Pipeline de limpieza ──────────────────────────────────────────────────────
 _stop_words = set(stopwords.words("english"))
@@ -86,10 +88,14 @@ def preprocess(text: str) -> str:
     return text
 
 def predict(text: str):
-    clean = preprocess(text)
-    vec   = vectorizer.transform([clean])
-    label = int(model.predict(vec)[0])
-    proba = model.predict_proba(vec)[0]
+    clean  = preprocess(text)
+    result = classifier(clean, truncation=True, max_length=512)[0]
+    label  = 1 if result["label"] == "LABEL_1" else 0
+    score  = result["score"]
+    if label == 1:
+        proba = [1 - score, score]
+    else:
+        proba = [score, 1 - score]
     return label, proba, clean
 
 # ── Historial ────────────────────────────────────────────────────────────────
@@ -99,7 +105,7 @@ if "history" not in st.session_state:
 # ── SIDEBAR ───────────────────────────────────────────────────────────────────
 with st.sidebar:
     st.markdown("## 🛡️ ToxiGuard")
-    st.markdown("Detector de toxicidad en comentarios de YouTube basado en **Random Forest + TF-IDF**.")
+    st.markdown("Detector de toxicidad en comentarios de YouTube basado en **DistilBERT** (Hugging Face).")
     st.divider()
 
     st.markdown("### ⚙️ Ajustes")
@@ -245,29 +251,7 @@ with tab_single:
         # Top palabras influyentes
         if show_top_words:
             with st.expander("🔑 Palabras más influyentes del comentario"):
-                try:
-                    feature_names = vectorizer.get_feature_names_out()
-                    vec_arr       = vectorizer.transform([clean_text]).toarray()[0]
-                    importances   = model.feature_importances_
-                    scores        = vec_arr * importances
-                    top_idx       = np.argsort(scores)[::-1][:10]
-                    top_words     = [(feature_names[i], scores[i]) for i in top_idx if scores[i] > 0]
-
-                    if top_words:
-                        tw_df = pd.DataFrame(top_words, columns=["Palabra / n-grama", "Peso"])
-                        fig2, ax2 = plt.subplots(figsize=(6, 3), facecolor="#0f1117")
-                        ax2.set_facecolor("#0f1117")
-                        bar_color = "#e05050" if effective_label == 1 else "#4caf50"
-                        ax2.barh(tw_df["Palabra / n-grama"][::-1], tw_df["Peso"][::-1], color=bar_color)
-                        ax2.tick_params(colors="white", labelsize=9)
-                        for spine in ax2.spines.values():
-                            spine.set_visible(False)
-                        ax2.set_title("Palabras que más aportaron a la clasificación", color="white", fontsize=10)
-                        st.pyplot(fig2, use_container_width=False)
-                    else:
-                        st.info("Ninguna palabra figura entre las características del modelo.")
-                except Exception:
-                    st.info("No se pudo calcular la importancia de palabras para este texto.")
+                st.info("El modelo transformer no expone importancia de palabras individuales.")
 
         # Guardar en historial
         st.session_state.history.append({
@@ -511,8 +495,8 @@ with tab_info:
             #### 🧠 Arquitectura
             | Componente | Detalle |
             |---|---|
-            | **Algoritmo** | Random Forest (scikit-learn) |
-            | **Vectorización** | TF-IDF (500 features, 1-2 gramas) |
+            | **Algoritmo** | DistilBERT (Hugging Face Transformers) |
+            | **Vectorización** | Tokenizador DistilBERT (integrado en el modelo) |
             | **Optimización** | Optuna (50 trials) |
             | **Dataset** | YouToxic English 1 000 comentarios |
             | **División** | 80% train / 20% test |
@@ -538,7 +522,7 @@ with tab_info:
             | **Recall tóxicos** | ~0.26 |
 
             #### ⚠️ Limitaciones
-            - TF-IDF no entiende contexto (sarcasmo, ironía).
+            - DistilBERT puede tener dificultades con sarcasmo e ironía sutil.
             - Dataset pequeño (800 muestras de entrenamiento).
             - Falla con odio implícito o contextual.
 
